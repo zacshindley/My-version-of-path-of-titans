@@ -7,7 +7,8 @@ public class DinoPlayerController : MonoBehaviour
     [Header("Movement")]
     public float walkSpeed = 8f;
     public float sprintSpeed = 18f;
-    public float turnSpeed = 9f;
+    public float reverseSpeedMultiplier = 0.55f;
+    public float turnSpeed = 135f;
     public float jumpHeight = 1.4f;
     public float gravity = -22f;
 
@@ -69,22 +70,22 @@ public class DinoPlayerController : MonoBehaviour
             verticalVelocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
         }
 
-        Vector3 move = Vector3.zero;
-        if (input.sqrMagnitude > 0.01f)
+        if (Mathf.Abs(input.x) > 0.01f)
         {
-            Vector3 camForward = cameraTransform != null ? cameraTransform.forward : Vector3.forward;
-            Vector3 camRight = cameraTransform != null ? cameraTransform.right : Vector3.right;
-            camForward.y = 0f;
-            camRight.y = 0f;
-            camForward.Normalize();
-            camRight.Normalize();
-
-            move = (camForward * input.z + camRight * input.x).normalized;
-            Quaternion targetRotation = Quaternion.LookRotation(move, Vector3.up);
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, turnSpeed * Time.deltaTime);
+            transform.Rotate(Vector3.up, input.x * turnSpeed * Time.deltaTime);
         }
 
-        float speed = sprintHeld ? sprintSpeed : walkSpeed;
+        Vector3 move = Vector3.zero;
+        if (Mathf.Abs(input.z) > 0.01f)
+        {
+            move = transform.forward * input.z;
+        }
+
+        float speed = sprintHeld && input.z > 0f ? sprintSpeed : walkSpeed;
+        if (input.z < 0f)
+        {
+            speed *= reverseSpeedMultiplier;
+        }
         controller.Move(move * speed * Time.deltaTime);
 
         verticalVelocity.y += gravity * Time.deltaTime;

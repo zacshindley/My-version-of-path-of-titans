@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -38,7 +39,7 @@ public class DinoPlayerController : MonoBehaviour
             cameraTransform = Camera.main.transform;
         }
 
-        visualRoot = transform.Find("Dino Visual - nose points Unity forward");
+        EnsureVisualRootFacesUnityForward();
         if (visualRoot != null)
         {
             visualBaseRotation = visualRoot.localRotation;
@@ -115,6 +116,39 @@ public class DinoPlayerController : MonoBehaviour
         controller.Move(verticalVelocity * Time.deltaTime);
 
         UpdateBodyAndLegs();
+    }
+
+    private void EnsureVisualRootFacesUnityForward()
+    {
+        visualRoot = transform.Find("Dino Visual - nose points Unity forward");
+        if (visualRoot != null)
+        {
+            return;
+        }
+
+        List<Transform> visualChildren = new List<Transform>();
+        foreach (Transform child in transform)
+        {
+            if (child.GetComponent<Camera>() != null) continue;
+            visualChildren.Add(child);
+        }
+
+        if (visualChildren.Count == 0)
+        {
+            return;
+        }
+
+        GameObject wrapper = new GameObject("Dino Visual - nose points Unity forward");
+        visualRoot = wrapper.transform;
+        visualRoot.SetParent(transform, false);
+        visualRoot.localPosition = Vector3.zero;
+        visualRoot.localRotation = Quaternion.Euler(0f, -90f, 0f);
+        visualRoot.localScale = Vector3.one;
+
+        foreach (Transform child in visualChildren)
+        {
+            child.SetParent(visualRoot, false);
+        }
     }
 
     private void CacheAnimatedLimbs()

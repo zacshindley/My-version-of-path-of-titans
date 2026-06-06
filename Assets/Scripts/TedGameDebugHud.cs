@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class TedGameDebugHud : MonoBehaviour
 {
-    public const string TedBuildLabel = "TED UNITY DINO v2026-06-06.3 - auto T-Rex import + runtime terrain";
+    public const string TedBuildLabel = "TED UNITY DINO v2026-06-06.4 - tail camera + auto T-Rex";
 
     private GUIStyle style;
 

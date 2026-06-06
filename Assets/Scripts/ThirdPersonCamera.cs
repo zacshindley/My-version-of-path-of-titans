@@ -4,12 +4,11 @@ public class ThirdPersonCamera : MonoBehaviour
 {
     public Transform target;
     public Transform headTarget;
-    public Transform tailTarget;
-    public Vector3 tailOffset = new Vector3(0f, 4.8f, -14f);
+    public Vector3 followOffset = new Vector3(0f, 7.5f, -18f);
     public float followSmoothness = 5.5f;
     public float rotationSmoothness = 7f;
-    public float lookHeight = 1.9f;
-    public float lookAheadDistance = 3f;
+    public float lookHeight = 2.7f;
+    public float lookAheadDistance = 5f;
 
     private void LateUpdate()
     {
@@ -20,13 +19,7 @@ public class ThirdPersonCamera : MonoBehaviour
             headTarget = FindChildContaining(target, "head");
         }
 
-        if (tailTarget == null)
-        {
-            tailTarget = FindChildContaining(target, "tail");
-        }
-
-        Vector3 tailPoint = tailTarget != null ? tailTarget.position : target.position - target.forward * 2.8f;
-        Vector3 desiredPosition = tailPoint + target.TransformDirection(tailOffset);
+        Vector3 desiredPosition = target.position + target.TransformDirection(followOffset);
         Vector3 lookPoint = headTarget != null
             ? headTarget.position + target.forward * lookAheadDistance
             : target.position + Vector3.up * lookHeight + target.forward * lookAheadDistance;

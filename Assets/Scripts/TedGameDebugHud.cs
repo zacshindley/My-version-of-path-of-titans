@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class TedGameDebugHud : MonoBehaviour
 {
-    public const string TedBuildLabel = "TED UNITY DINO v2026-06-06.6 - plain third person camera";
+    public const string TedBuildLabel = "TED UNITY DINO v2026-06-06.7 - reference-style third person view";
 
     private GUIStyle style;
 

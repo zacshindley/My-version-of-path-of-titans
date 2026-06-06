@@ -3,15 +3,19 @@ using UnityEngine;
 public class ThirdPersonCamera : MonoBehaviour
 {
     public Transform target;
-    public Vector3 followOffset = new Vector3(0f, 6f, -14f);
-    public float followSmoothness = 7f;
-    public float rotationSmoothness = 9f;
-    public float lookHeight = 2.2f;
+
+    [Header("Third Person View")]
+    public Vector3 followOffset = new Vector3(0f, 4.2f, -9.5f);
+    public float lookHeight = 2.6f;
+    public float followSmoothness = 8f;
+    public float rotationSmoothness = 10f;
 
     private void LateUpdate()
     {
         if (target == null) return;
 
+        // Standard third-person chase camera: behind the dino, slightly above it,
+        // looking at the upper body so the player sees the world ahead.
         Vector3 desiredPosition = target.TransformPoint(followOffset);
         Vector3 lookPoint = target.position + Vector3.up * lookHeight;
 

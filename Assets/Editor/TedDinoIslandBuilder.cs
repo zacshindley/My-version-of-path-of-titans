@@ -67,8 +67,8 @@ public static class TedDinoIslandBuilder
         Camera cam = camera.AddComponent<Camera>();
         cam.tag = "MainCamera";
         cam.farClipPlane = 9500f;
-        cam.fieldOfView = 62f;
-        camera.transform.position = player.transform.position + new Vector3(0f, 5.5f, -10f);
+        cam.fieldOfView = 58f;
+        camera.transform.position = player.transform.position + new Vector3(0f, 4.2f, -9.5f);
         ThirdPersonCamera follow = camera.AddComponent<ThirdPersonCamera>();
         follow.target = player.transform;
         dinoController.cameraTransform = camera.transform;

@@ -4,9 +4,9 @@ public class ThirdPersonCamera : MonoBehaviour
 {
     public Transform target;
     public Transform headTarget;
-    public Vector3 offset = new Vector3(0f, 4.8f, -9f);
-    public float followSmoothness = 6f;
-    public float rotationSmoothness = 8f;
+    public Vector3 offset = new Vector3(0f, 5.4f, -10.5f);
+    public float followSmoothness = 5.5f;
+    public float rotationSmoothness = 7f;
     public float lookHeight = 1.7f;
 
     private void LateUpdate()
@@ -15,7 +15,7 @@ public class ThirdPersonCamera : MonoBehaviour
 
         if (headTarget == null)
         {
-            headTarget = target.Find("Head");
+            headTarget = FindChildRecursive(target, "Head");
         }
 
         Vector3 lookPoint = headTarget != null ? headTarget.position : target.position + Vector3.up * lookHeight;
@@ -29,5 +29,24 @@ public class ThirdPersonCamera : MonoBehaviour
             Quaternion desiredRotation = Quaternion.LookRotation(lookDirection.normalized, Vector3.up);
             transform.rotation = Quaternion.Slerp(transform.rotation, desiredRotation, rotationSmoothness * Time.deltaTime);
         }
+    }
+
+    private static Transform FindChildRecursive(Transform parent, string childName)
+    {
+        foreach (Transform child in parent)
+        {
+            if (child.name == childName)
+            {
+                return child;
+            }
+
+            Transform found = FindChildRecursive(child, childName);
+            if (found != null)
+            {
+                return found;
+            }
+        }
+
+        return null;
     }
 }

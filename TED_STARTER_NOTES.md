@@ -1,10 +1,10 @@
 # Ted's Unity Dino Starter
 
-This repo now has three starter scripts:
+This repo has three starter scripts:
 
-- `Assets/Scripts/DinoPlayerController.cs` — WASD/arrow movement, sprint and jump.
-- `Assets/Scripts/ThirdPersonCamera.cs` — smooth follow camera.
-- `Assets/Editor/TedDinoIslandBuilder.cs` — Unity editor menu that builds a starter island scene.
+- `Assets/Scripts/DinoPlayerController.cs` — creature-style WASD movement, sprint, jump, smoother acceleration, slope lean and simple leg motion.
+- `Assets/Scripts/ThirdPersonCamera.cs` — smooth follow camera that looks at the dino head.
+- `Assets/Editor/TedDinoIslandBuilder.cs` — Unity editor menu that builds the starter island scene.
 
 ## In Unity
 
@@ -12,8 +12,8 @@ This repo now has three starter scripts:
 2. Open the project in Unity.
 3. In the top menu, click `Ted > Create Dino Island Starter Scene`.
 4. Press Play.
-5. Controls: WASD/arrows move, Shift sprint, Space jump.
+5. Controls: W/Up = forward where the dino nose points, S/Down = reverse, A/D = steer, Shift+W = sprint, Space = jump.
 
-This now creates a much larger, life-size-feeling island compared with the dino. If you already created the old tiny scene, run `Ted > Create Dino Island Starter Scene` again to rebuild it with the bigger map.
+The builder now creates a much larger procedural terrain island with hills, a river, plants, rocks, collectibles and surrounding ocean. If you already created the old scene, run `Ted > Create Dino Island Starter Scene` again to rebuild it.
 
-This is still a placeholder dinosaur, but it gives us the proper Unity structure so we can swap in a real rigged dinosaur model next.
+This is still a placeholder dinosaur. For true photorealistic visuals and proper walking/running over hills, the next real step is importing a rigged dinosaur model with animations and blending those animations in Unity.

@@ -13,15 +13,22 @@ public class DinoPlayerController : MonoBehaviour
     public float jumpHeight = 1.4f;
     public float gravity = -22f;
 
-    [Header("Feel")]
+    [Header("Creature Feel")]
     public Transform cameraTransform;
     public float acceleration = 7f;
     public float deceleration = 10f;
     public float groundedStickForce = -2f;
+    public float slopeLeanAmount = 10f;
+    public float legSwingAmount = 18f;
+    public float legSwingSpeed = 4.5f;
 
     private CharacterController controller;
     private Vector3 verticalVelocity;
     private float currentForwardSpeed;
+    private Transform visualRoot;
+    private Quaternion visualBaseRotation;
+    private Transform[] animatedLimbs;
+    private Quaternion[] animatedLimbBaseRotations;
 
     private void Awake()
     {
@@ -29,6 +36,13 @@ public class DinoPlayerController : MonoBehaviour
         if (cameraTransform == null && Camera.main != null)
         {
             cameraTransform = Camera.main.transform;
+        }
+
+        visualRoot = transform.Find("Dino Visual - nose points Unity forward");
+        if (visualRoot != null)
+        {
+            visualBaseRotation = visualRoot.localRotation;
+            CacheAnimatedLimbs();
         }
     }
 
@@ -99,5 +113,56 @@ public class DinoPlayerController : MonoBehaviour
 
         verticalVelocity.y += gravity * Time.deltaTime;
         controller.Move(verticalVelocity * Time.deltaTime);
+
+        UpdateBodyAndLegs();
+    }
+
+    private void CacheAnimatedLimbs()
+    {
+        Transform[] allChildren = visualRoot.GetComponentsInChildren<Transform>();
+        System.Collections.Generic.List<Transform> limbs = new System.Collections.Generic.List<Transform>();
+        foreach (Transform child in allChildren)
+        {
+            if (child == visualRoot) continue;
+            if (child.name.Contains("Thigh") || child.name.Contains("Shin") || child.name.Contains("Foot"))
+            {
+                limbs.Add(child);
+            }
+        }
+
+        animatedLimbs = limbs.ToArray();
+        animatedLimbBaseRotations = new Quaternion[animatedLimbs.Length];
+        for (int i = 0; i < animatedLimbs.Length; i++)
+        {
+            animatedLimbBaseRotations[i] = animatedLimbs[i].localRotation;
+        }
+    }
+
+    private void UpdateBodyAndLegs()
+    {
+        if (visualRoot == null) return;
+
+        Vector3 groundNormal = Vector3.up;
+        if (Physics.Raycast(transform.position + Vector3.up * 1.2f, Vector3.down, out RaycastHit hit, 4f))
+        {
+            groundNormal = hit.normal;
+        }
+
+        Vector3 localNormal = transform.InverseTransformDirection(groundNormal);
+        float pitch = Mathf.Clamp(localNormal.z * -slopeLeanAmount, -slopeLeanAmount, slopeLeanAmount);
+        float roll = Mathf.Clamp(localNormal.x * slopeLeanAmount, -slopeLeanAmount, slopeLeanAmount);
+        Quaternion slopeTilt = Quaternion.Euler(pitch, 0f, roll);
+        visualRoot.localRotation = Quaternion.Slerp(visualRoot.localRotation, visualBaseRotation * slopeTilt, 8f * Time.deltaTime);
+
+        if (animatedLimbs == null || animatedLimbs.Length == 0) return;
+
+        float speed01 = Mathf.Clamp01(Mathf.Abs(currentForwardSpeed) / sprintSpeed);
+        float gait = Time.time * legSwingSpeed * Mathf.Lerp(0.6f, 1.6f, speed01);
+        for (int i = 0; i < animatedLimbs.Length; i++)
+        {
+            float sidePhase = i % 2 == 0 ? 0f : Mathf.PI;
+            float swing = Mathf.Sin(gait + sidePhase) * legSwingAmount * speed01;
+            animatedLimbs[i].localRotation = animatedLimbBaseRotations[i] * Quaternion.Euler(swing, 0f, 0f);
+        }
     }
 }

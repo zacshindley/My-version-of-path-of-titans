@@ -1,10 +1,17 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+#if UNITY_EDITOR
+using UnityEditor;
+using UnityEditor.Animations;
+#endif
 
 [RequireComponent(typeof(CharacterController))]
 public class DinoPlayerController : MonoBehaviour
 {
+    private const string QuaterniusTrexPath = "Assets/External/Quaternius/Dinosaur Animated Pack - Dec 2018/FBX/Trex.fbx";
+    private const string GeneratedAnimatorPath = "Assets/Generated/TedTrexAnimator.controller";
+
     [Header("Movement")]
     public float walkSpeed = 6f;
     public float sprintSpeed = 13f;
@@ -130,6 +137,12 @@ public class DinoPlayerController : MonoBehaviour
         visualRoot = transform.Find("Dino Visual - nose points Unity forward");
         if (visualRoot != null)
         {
+#if UNITY_EDITOR
+            if (TryReplacePrimitiveVisualWithImportedTrex())
+            {
+                return;
+            }
+#endif
             return;
         }
 
@@ -165,7 +178,142 @@ public class DinoPlayerController : MonoBehaviour
         {
             child.SetParent(visualRoot, false);
         }
+
+#if UNITY_EDITOR
+        TryReplacePrimitiveVisualWithImportedTrex();
+#endif
     }
+
+#if UNITY_EDITOR
+    private bool TryReplacePrimitiveVisualWithImportedTrex()
+    {
+        // In Zac's current workflow he may still be opening the old saved scene.
+        // This upgrades that old primitive placeholder automatically in Editor Play mode.
+        GameObject trexPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(QuaterniusTrexPath);
+        if (trexPrefab == null)
+        {
+            return false;
+        }
+
+        foreach (Transform child in transform)
+        {
+            if (child.name.ToLowerInvariant().Contains("quaternius"))
+            {
+                visualRoot = child;
+                dinoAnimator = visualRoot.GetComponentInChildren<Animator>();
+                AssignTrexAnimatorController();
+                return true;
+            }
+        }
+
+        List<GameObject> oldVisualObjects = new List<GameObject>();
+        foreach (Transform child in transform)
+        {
+            if (child.GetComponent<Camera>() != null) continue;
+            oldVisualObjects.Add(child.gameObject);
+        }
+
+        GameObject trex = (GameObject)PrefabUtility.InstantiatePrefab(trexPrefab);
+        trex.name = "Quaternius Animated T-Rex - runtime upgraded visual";
+        trex.transform.SetParent(transform, false);
+        trex.transform.localPosition = Vector3.zero;
+        trex.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+        trex.transform.localScale = Vector3.one * 1.8f;
+        visualRoot = trex.transform;
+
+        foreach (GameObject oldObject in oldVisualObjects)
+        {
+            Destroy(oldObject);
+        }
+
+        dinoAnimator = visualRoot.GetComponentInChildren<Animator>();
+        if (dinoAnimator == null)
+        {
+            dinoAnimator = trex.AddComponent<Animator>();
+        }
+        AssignTrexAnimatorController();
+        return true;
+    }
+
+    private void AssignTrexAnimatorController()
+    {
+        if (dinoAnimator == null) return;
+
+        RuntimeAnimatorController existingController = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(GeneratedAnimatorPath);
+        if (existingController == null)
+        {
+            existingController = BuildTrexAnimatorController();
+        }
+
+        if (existingController != null)
+        {
+            dinoAnimator.runtimeAnimatorController = existingController;
+        }
+    }
+
+    private RuntimeAnimatorController BuildTrexAnimatorController()
+    {
+        const string generatedFolder = "Assets/Generated";
+        if (!AssetDatabase.IsValidFolder(generatedFolder))
+        {
+            AssetDatabase.CreateFolder("Assets", "Generated");
+        }
+
+        AnimatorController controller = AnimatorController.CreateAnimatorControllerAtPath(GeneratedAnimatorPath);
+        controller.AddParameter("Speed", AnimatorControllerParameterType.Float);
+
+        AnimationClip idle = FindTrexClip("Idle", "Idl");
+        AnimationClip walk = FindTrexClip("Walk");
+        AnimationClip run = FindTrexClip("Run");
+
+        AnimatorStateMachine machine = controller.layers[0].stateMachine;
+        AnimatorState idleState = machine.AddState("Idle");
+        idleState.motion = idle != null ? idle : walk;
+        machine.defaultState = idleState;
+
+        AnimatorState walkState = machine.AddState("Walk");
+        walkState.motion = walk != null ? walk : idleState.motion;
+
+        AnimatorState runState = machine.AddState("Run");
+        runState.motion = run != null ? run : walkState.motion;
+
+        AddSpeedTransition(idleState, walkState, 0.25f, true);
+        AddSpeedTransition(walkState, idleState, 0.2f, false);
+        AddSpeedTransition(walkState, runState, 8f, true);
+        AddSpeedTransition(runState, walkState, 7.5f, false);
+
+        AssetDatabase.SaveAssets();
+        return controller;
+    }
+
+    private static void AddSpeedTransition(AnimatorState from, AnimatorState to, float threshold, bool greater)
+    {
+        AnimatorStateTransition transition = from.AddTransition(to);
+        transition.hasExitTime = false;
+        transition.duration = 0.18f;
+        transition.AddCondition(greater ? AnimatorConditionMode.Greater : AnimatorConditionMode.Less, threshold, "Speed");
+    }
+
+    private static AnimationClip FindTrexClip(params string[] nameParts)
+    {
+        Object[] assets = AssetDatabase.LoadAllAssetsAtPath(QuaterniusTrexPath);
+        foreach (Object asset in assets)
+        {
+            AnimationClip clip = asset as AnimationClip;
+            if (clip == null) continue;
+            string lower = clip.name.ToLowerInvariant();
+            foreach (string part in nameParts)
+            {
+                if (lower.Contains(part.ToLowerInvariant()))
+                {
+                    return clip;
+                }
+            }
+        }
+
+        return null;
+    }
+#endif
 
     private void CacheAnimatedLimbs()
     {

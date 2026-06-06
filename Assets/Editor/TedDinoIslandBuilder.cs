@@ -24,22 +24,26 @@ public static class TedDinoIslandBuilder
         light.intensity = 2.2f;
         sun.transform.rotation = Quaternion.Euler(48f, -35f, 0f);
 
+        const float islandRadius = 180f;
+        const float beachRadius = 220f;
+        const float seaScale = 85f;
+
         GameObject island = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        island.name = "Island Grass";
+        island.name = "Life Size Island Grass";
         island.transform.position = Vector3.zero;
-        island.transform.localScale = new Vector3(24f, 0.25f, 24f);
+        island.transform.localScale = new Vector3(islandRadius, 0.25f, islandRadius);
         island.GetComponent<Renderer>().sharedMaterial = grass;
 
         GameObject beach = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        beach.name = "Beach Ring";
+        beach.name = "Life Size Beach Ring";
         beach.transform.position = new Vector3(0f, -0.08f, 0f);
-        beach.transform.localScale = new Vector3(30f, 0.18f, 30f);
+        beach.transform.localScale = new Vector3(beachRadius, 0.18f, beachRadius);
         beach.GetComponent<Renderer>().sharedMaterial = sand;
 
         GameObject sea = GameObject.CreatePrimitive(PrimitiveType.Plane);
-        sea.name = "Sea";
+        sea.name = "Open Sea";
         sea.transform.position = new Vector3(0f, -0.2f, 0f);
-        sea.transform.localScale = new Vector3(16f, 1f, 16f);
+        sea.transform.localScale = new Vector3(seaScale, 1f, seaScale);
         sea.GetComponent<Renderer>().sharedMaterial = water;
 
         GameObject player = new GameObject("Playable Dino Placeholder");
@@ -53,28 +57,35 @@ public static class TedDinoIslandBuilder
         GameObject camera = new GameObject("Follow Camera");
         Camera cam = camera.AddComponent<Camera>();
         cam.tag = "MainCamera";
-        camera.transform.position = new Vector3(0f, 4.5f, -8f);
+        cam.farClipPlane = 1200f;
+        camera.transform.position = new Vector3(0f, 5.5f, -10f);
         ThirdPersonCamera follow = camera.AddComponent<ThirdPersonCamera>();
         follow.target = player.transform;
         player.GetComponent<DinoPlayerController>().cameraTransform = camera.transform;
 
         GameObject markerParent = new GameObject("Collectibles");
-        for (int i = 0; i < 8; i++)
+        Material foodMaterial = MakeMaterial("Ted_Food", new Color(0.28f, 0.85f, 0.22f));
+        for (int ring = 0; ring < 3; ring++)
         {
-            float angle = i * Mathf.PI * 2f / 8f;
-            GameObject food = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            food.name = "Food Marker";
-            food.transform.SetParent(markerParent.transform);
-            food.transform.position = new Vector3(Mathf.Cos(angle) * 8f, 0.65f, Mathf.Sin(angle) * 8f);
-            food.transform.localScale = Vector3.one * 0.45f;
-            food.GetComponent<Renderer>().sharedMaterial = MakeMaterial("Ted_Food", new Color(0.28f, 0.85f, 0.22f));
+            int markerCount = 10 + ring * 4;
+            float markerRadius = 28f + ring * 38f;
+            for (int i = 0; i < markerCount; i++)
+            {
+                float angle = (i + ring * 0.37f) * Mathf.PI * 2f / markerCount;
+                GameObject food = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                food.name = "Food Marker";
+                food.transform.SetParent(markerParent.transform);
+                food.transform.position = new Vector3(Mathf.Cos(angle) * markerRadius, 0.65f, Mathf.Sin(angle) * markerRadius);
+                food.transform.localScale = Vector3.one * 0.65f;
+                food.GetComponent<Renderer>().sharedMaterial = foodMaterial;
+            }
         }
 
         EditorSceneManager.SaveScene(scene, "Assets/Scenes/DinoIslandStarter.unity");
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
         Selection.activeGameObject = player;
-        Debug.Log("Ted created DinoIslandStarter.unity. Press Play and move with WASD/arrows, Shift sprint, Space jump.");
+        Debug.Log("Ted created a life-size DinoIslandStarter.unity. Press Play and move with WASD/arrows, Shift sprint, Space jump.");
     }
 
     private static void BuildBetterPlaceholderDino(Transform root, Material hide, Material belly, Material dark)

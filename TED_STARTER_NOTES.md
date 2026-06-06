@@ -14,4 +14,6 @@ This repo now has three starter scripts:
 4. Press Play.
 5. Controls: WASD/arrows move, Shift sprint, Space jump.
 
+This now creates a much larger, life-size-feeling island compared with the dino. If you already created the old tiny scene, run `Ted > Create Dino Island Starter Scene` again to rebuild it with the bigger map.
+
 This is still a placeholder dinosaur, but it gives us the proper Unity structure so we can swap in a real rigged dinosaur model next.

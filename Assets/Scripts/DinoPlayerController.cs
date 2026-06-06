@@ -5,8 +5,8 @@ using UnityEngine.InputSystem;
 public class DinoPlayerController : MonoBehaviour
 {
     [Header("Movement")]
-    public float walkSpeed = 5f;
-    public float sprintSpeed = 9f;
+    public float walkSpeed = 8f;
+    public float sprintSpeed = 18f;
     public float turnSpeed = 9f;
     public float jumpHeight = 1.4f;
     public float gravity = -22f;

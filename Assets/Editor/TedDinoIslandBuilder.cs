@@ -71,7 +71,6 @@ public static class TedDinoIslandBuilder
         camera.transform.position = player.transform.position + new Vector3(0f, 5.5f, -10f);
         ThirdPersonCamera follow = camera.AddComponent<ThirdPersonCamera>();
         follow.target = player.transform;
-        follow.headTarget = head;
         dinoController.cameraTransform = camera.transform;
 
         GameObject markerParent = new GameObject("Collectibles");

@@ -8,16 +8,20 @@ public class DinoPlayerController : MonoBehaviour
     public float walkSpeed = 6f;
     public float sprintSpeed = 13f;
     public float reverseSpeedMultiplier = 0.45f;
-    public float turnSpeed = 75f;
+    public float turnSpeed = 70f;
+    public float stationaryTurnMultiplier = 0.55f;
     public float jumpHeight = 1.4f;
     public float gravity = -22f;
 
     [Header("Feel")]
     public Transform cameraTransform;
+    public float acceleration = 7f;
+    public float deceleration = 10f;
     public float groundedStickForce = -2f;
 
     private CharacterController controller;
     private Vector3 verticalVelocity;
+    private float currentForwardSpeed;
 
     private void Awake()
     {
@@ -58,7 +62,8 @@ public class DinoPlayerController : MonoBehaviour
             sprintHeld = keyboard.leftShiftKey.isPressed || keyboard.rightShiftKey.isPressed;
         }
 
-        Vector3 input = new Vector3(movementInput.x, 0f, movementInput.y).normalized;
+        float turnInput = Mathf.Clamp(movementInput.x, -1f, 1f);
+        float moveInput = Mathf.Clamp(movementInput.y, -1f, 1f);
 
         if (controller.isGrounded && verticalVelocity.y < 0f)
         {
@@ -70,23 +75,27 @@ public class DinoPlayerController : MonoBehaviour
             verticalVelocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
         }
 
-        if (Mathf.Abs(input.x) > 0.01f)
+        float turnMultiplier = Mathf.Abs(currentForwardSpeed) > 0.2f ? 1f : stationaryTurnMultiplier;
+        if (Mathf.Abs(turnInput) > 0.01f)
         {
-            transform.Rotate(Vector3.up, input.x * turnSpeed * Time.deltaTime);
+            transform.Rotate(Vector3.up, turnInput * turnSpeed * turnMultiplier * Time.deltaTime);
         }
 
-        Vector3 move = Vector3.zero;
-        if (Mathf.Abs(input.z) > 0.01f)
+        float targetSpeed = 0f;
+        if (Mathf.Abs(moveInput) > 0.01f)
         {
-            move = transform.forward * input.z;
+            targetSpeed = sprintHeld && moveInput > 0f ? sprintSpeed : walkSpeed;
+            targetSpeed *= moveInput;
+
+            if (moveInput < 0f)
+            {
+                targetSpeed *= reverseSpeedMultiplier;
+            }
         }
 
-        float speed = sprintHeld && input.z > 0f ? sprintSpeed : walkSpeed;
-        if (input.z < 0f)
-        {
-            speed *= reverseSpeedMultiplier;
-        }
-        controller.Move(move * speed * Time.deltaTime);
+        float speedChangeRate = Mathf.Abs(targetSpeed) > 0.01f ? acceleration : deceleration;
+        currentForwardSpeed = Mathf.MoveTowards(currentForwardSpeed, targetSpeed, speedChangeRate * Time.deltaTime);
+        controller.Move(transform.forward * currentForwardSpeed * Time.deltaTime);
 
         verticalVelocity.y += gravity * Time.deltaTime;
         controller.Move(verticalVelocity * Time.deltaTime);

@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class TedGameDebugHud : MonoBehaviour
 {
-    public const string TedBuildLabel = "TED UNITY DINO v2026-06-06.9 - true first person no body blocking";
+    public const string TedBuildLabel = "TED UNITY DINO v2026-06-06.10 - V toggles 1st/3rd person";
 
     private GUIStyle style;
 

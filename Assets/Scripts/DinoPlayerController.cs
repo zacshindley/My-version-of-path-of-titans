@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(CharacterController))]
 public class DinoPlayerController : MonoBehaviour
@@ -28,16 +29,42 @@ public class DinoPlayerController : MonoBehaviour
 
     private void Update()
     {
-        float horizontal = Input.GetAxisRaw("Horizontal");
-        float vertical = Input.GetAxisRaw("Vertical");
-        Vector3 input = new Vector3(horizontal, 0f, vertical).normalized;
+        Keyboard keyboard = Keyboard.current;
+        Vector2 movementInput = Vector2.zero;
+        bool jumpPressed = false;
+        bool sprintHeld = false;
+
+        if (keyboard != null)
+        {
+            if (keyboard.aKey.isPressed || keyboard.leftArrowKey.isPressed)
+            {
+                movementInput.x -= 1f;
+            }
+            if (keyboard.dKey.isPressed || keyboard.rightArrowKey.isPressed)
+            {
+                movementInput.x += 1f;
+            }
+            if (keyboard.sKey.isPressed || keyboard.downArrowKey.isPressed)
+            {
+                movementInput.y -= 1f;
+            }
+            if (keyboard.wKey.isPressed || keyboard.upArrowKey.isPressed)
+            {
+                movementInput.y += 1f;
+            }
+
+            jumpPressed = keyboard.spaceKey.wasPressedThisFrame;
+            sprintHeld = keyboard.leftShiftKey.isPressed || keyboard.rightShiftKey.isPressed;
+        }
+
+        Vector3 input = new Vector3(movementInput.x, 0f, movementInput.y).normalized;
 
         if (controller.isGrounded && verticalVelocity.y < 0f)
         {
             verticalVelocity.y = groundedStickForce;
         }
 
-        if (Input.GetButtonDown("Jump") && controller.isGrounded)
+        if (jumpPressed && controller.isGrounded)
         {
             verticalVelocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
         }
@@ -57,7 +84,7 @@ public class DinoPlayerController : MonoBehaviour
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, turnSpeed * Time.deltaTime);
         }
 
-        float speed = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift) ? sprintSpeed : walkSpeed;
+        float speed = sprintHeld ? sprintSpeed : walkSpeed;
         controller.Move(move * speed * Time.deltaTime);
 
         verticalVelocity.y += gravity * Time.deltaTime;

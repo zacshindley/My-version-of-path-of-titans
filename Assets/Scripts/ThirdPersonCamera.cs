@@ -4,21 +4,56 @@ public class ThirdPersonCamera : MonoBehaviour
 {
     public Transform target;
 
-    [Header("First Person Dino View")]
-    public Vector3 eyeOffset = new Vector3(0f, 2.9f, 1.35f);
-    public float positionSmoothness = 14f;
-    public float rotationSmoothness = 14f;
+    [Header("True First Person Dino View")]
+    public Vector3 eyeOffset = new Vector3(0f, 3.2f, 4.6f);
+    public float positionSmoothness = 18f;
+    public float rotationSmoothness = 18f;
+    public bool hideOwnDinoMesh = true;
+
+    private Renderer[] targetRenderers;
+    private bool renderersHidden;
 
     private void LateUpdate()
     {
         if (target == null) return;
 
-        // First-person view: camera sits at the dino's eye/head area and looks
-        // straight forward in the same direction the dino is facing.
+        // True first person: place the camera just in front of the dino's face,
+        // looking exactly where the dino is facing. This avoids seeing body/legs.
         Vector3 desiredPosition = target.TransformPoint(eyeOffset);
         Quaternion desiredRotation = target.rotation;
 
         transform.position = Vector3.Lerp(transform.position, desiredPosition, positionSmoothness * Time.deltaTime);
         transform.rotation = Quaternion.Slerp(transform.rotation, desiredRotation, rotationSmoothness * Time.deltaTime);
+
+        if (hideOwnDinoMesh && !renderersHidden)
+        {
+            HideTargetRenderers();
+        }
+    }
+
+    private void HideTargetRenderers()
+    {
+        targetRenderers = target.GetComponentsInChildren<Renderer>();
+        foreach (Renderer renderer in targetRenderers)
+        {
+            renderer.enabled = false;
+        }
+
+        renderersHidden = true;
+    }
+
+    private void OnDisable()
+    {
+        if (targetRenderers == null) return;
+
+        foreach (Renderer renderer in targetRenderers)
+        {
+            if (renderer != null)
+            {
+                renderer.enabled = true;
+            }
+        }
+
+        renderersHidden = false;
     }
 }

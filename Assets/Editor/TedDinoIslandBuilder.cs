@@ -1,10 +1,13 @@
 using UnityEditor;
+using UnityEditor.Animations;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public static class TedDinoIslandBuilder
 {
+    private const string QuaterniusTrexPath = "Assets/External/Quaternius/Dinosaur Animated Pack - Dec 2018/FBX/Trex.fbx";
+    private const string GeneratedAnimatorPath = "Assets/Generated/TedTrexAnimator.controller";
     private const float WorldSize = 7200f; // 20x bigger than the previous 360-ish playable feel.
     private const float TerrainHeight = 280f;
     private const int HeightResolution = 513;
@@ -51,14 +54,14 @@ public static class TedDinoIslandBuilder
         BuildForestAndRocks(trunk, leaves, rock);
 
         float spawnY = terrain.SampleHeight(Vector3.zero) + terrain.transform.position.y + 2.5f;
-        GameObject player = new GameObject("Playable Dino Placeholder");
+        GameObject player = new GameObject("Playable Quaternius T-Rex");
         player.transform.position = new Vector3(0f, spawnY, 0f);
         CharacterController controller = player.AddComponent<CharacterController>();
-        controller.height = 2.2f;
-        controller.radius = 0.55f;
-        controller.center = new Vector3(0f, 1.1f, 0f);
+        controller.height = 3.8f;
+        controller.radius = 0.9f;
+        controller.center = new Vector3(0f, 1.9f, 0f);
         DinoPlayerController dinoController = player.AddComponent<DinoPlayerController>();
-        Transform head = BuildBetterPlaceholderDino(player.transform, dinoHide, belly, dark);
+        Transform head = BuildPlayableDinoVisual(player.transform, dinoHide, belly, dark);
 
         GameObject camera = new GameObject("Follow Camera");
         Camera cam = camera.AddComponent<Camera>();
@@ -95,7 +98,120 @@ public static class TedDinoIslandBuilder
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
         Selection.activeGameObject = player;
-        Debug.Log("Ted created a 20x larger procedural dino island with terrain, hills, river, plants and forward-facing dino controls.");
+        Debug.Log("Ted created a 20x larger procedural dino island with terrain, hills, river, plants and an imported animated Quaternius T-Rex when available.");
+    }
+
+    private static Transform BuildPlayableDinoVisual(Transform root, Material hide, Material belly, Material dark)
+    {
+        GameObject trexPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(QuaterniusTrexPath);
+        if (trexPrefab == null)
+        {
+            Debug.LogWarning("Ted could not find the Quaternius T-Rex FBX yet, so he used the old primitive dino fallback. Wait for Unity to import the FBX files, then run Ted > Create Dino Island Starter Scene again.");
+            return BuildBetterPlaceholderDino(root, hide, belly, dark);
+        }
+
+        GameObject trex = (GameObject)PrefabUtility.InstantiatePrefab(trexPrefab);
+        trex.name = "Quaternius Animated T-Rex - playable visual";
+        trex.transform.SetParent(root, false);
+        trex.transform.localPosition = Vector3.zero;
+        trex.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+        trex.transform.localScale = Vector3.one * 1.8f;
+
+        Animator animator = trex.GetComponentInChildren<Animator>();
+        if (animator == null)
+        {
+            animator = trex.AddComponent<Animator>();
+        }
+
+        AnimatorController controller = BuildTrexAnimatorController();
+        if (controller != null)
+        {
+            animator.runtimeAnimatorController = controller;
+        }
+
+        Transform head = FindChildContaining(trex.transform, "head");
+        return head != null ? head : trex.transform;
+    }
+
+    private static AnimatorController BuildTrexAnimatorController()
+    {
+        const string generatedFolder = "Assets/Generated";
+        if (!AssetDatabase.IsValidFolder(generatedFolder))
+        {
+            AssetDatabase.CreateFolder("Assets", "Generated");
+        }
+
+        AssetDatabase.DeleteAsset(GeneratedAnimatorPath);
+        AnimatorController controller = AnimatorController.CreateAnimatorControllerAtPath(GeneratedAnimatorPath);
+        controller.AddParameter("Speed", AnimatorControllerParameterType.Float);
+
+        AnimationClip idle = FindClip("Idle", "Idl");
+        AnimationClip walk = FindClip("Walk");
+        AnimationClip run = FindClip("Run");
+
+        AnimatorStateMachine machine = controller.layers[0].stateMachine;
+        machine.states = new ChildAnimatorState[0];
+
+        AnimatorState idleState = machine.AddState("Idle");
+        idleState.motion = idle != null ? idle : walk;
+        machine.defaultState = idleState;
+
+        AnimatorState walkState = machine.AddState("Walk");
+        walkState.motion = walk != null ? walk : idleState.motion;
+
+        AnimatorState runState = machine.AddState("Run");
+        runState.motion = run != null ? run : walkState.motion;
+
+        AddSpeedTransition(idleState, walkState, 0.25f, true);
+        AddSpeedTransition(walkState, idleState, 0.2f, false);
+        AddSpeedTransition(walkState, runState, 8f, true);
+        AddSpeedTransition(runState, walkState, 7.5f, false);
+
+        EditorUtility.SetDirty(controller);
+        AssetDatabase.SaveAssets();
+        return controller;
+    }
+
+    private static void AddSpeedTransition(AnimatorState from, AnimatorState to, float threshold, bool greater)
+    {
+        AnimatorStateTransition transition = from.AddTransition(to);
+        transition.hasExitTime = false;
+        transition.duration = 0.18f;
+        transition.AddCondition(greater ? AnimatorConditionMode.Greater : AnimatorConditionMode.Less, threshold, "Speed");
+    }
+
+    private static AnimationClip FindClip(params string[] nameParts)
+    {
+        Object[] assets = AssetDatabase.LoadAllAssetsAtPath(QuaterniusTrexPath);
+        foreach (Object asset in assets)
+        {
+            AnimationClip clip = asset as AnimationClip;
+            if (clip == null) continue;
+            string lower = clip.name.ToLowerInvariant();
+            foreach (string part in nameParts)
+            {
+                if (lower.Contains(part.ToLowerInvariant()))
+                {
+                    return clip;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private static Transform FindChildContaining(Transform parent, string namePart)
+    {
+        string lowerPart = namePart.ToLowerInvariant();
+        foreach (Transform child in parent.GetComponentsInChildren<Transform>())
+        {
+            if (child.name.ToLowerInvariant().Contains(lowerPart))
+            {
+                return child;
+            }
+        }
+
+        return null;
     }
 
     private static Terrain BuildTerrain(Material grass, Material sand)

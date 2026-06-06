@@ -27,6 +27,7 @@ public class DinoPlayerController : MonoBehaviour
     private Vector3 verticalVelocity;
     private float currentForwardSpeed;
     private Transform visualRoot;
+    private Animator dinoAnimator;
     private Quaternion visualBaseRotation;
     private Transform[] animatedLimbs;
     private Quaternion[] animatedLimbBaseRotations;
@@ -43,6 +44,7 @@ public class DinoPlayerController : MonoBehaviour
         if (visualRoot != null)
         {
             visualBaseRotation = visualRoot.localRotation;
+            dinoAnimator = visualRoot.GetComponentInChildren<Animator>();
             CacheAnimatedLimbs();
         }
     }
@@ -115,6 +117,11 @@ public class DinoPlayerController : MonoBehaviour
         verticalVelocity.y += gravity * Time.deltaTime;
         controller.Move(verticalVelocity * Time.deltaTime);
 
+        if (dinoAnimator != null)
+        {
+            dinoAnimator.SetFloat("Speed", Mathf.Abs(currentForwardSpeed));
+        }
+
         UpdateBodyAndLegs();
     }
 
@@ -124,6 +131,15 @@ public class DinoPlayerController : MonoBehaviour
         if (visualRoot != null)
         {
             return;
+        }
+
+        foreach (Transform child in transform)
+        {
+            if (child.GetComponentInChildren<Animator>() != null || child.name.ToLowerInvariant().Contains("quaternius"))
+            {
+                visualRoot = child;
+                return;
+            }
         }
 
         List<Transform> visualChildren = new List<Transform>();

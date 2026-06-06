@@ -1,19 +1,28 @@
 # Ted's Unity Dino Starter
 
-This repo has three starter scripts:
+This repo now includes the CC0 Quaternius Animated LowPoly Dinosaurs pack:
 
-- `Assets/Scripts/DinoPlayerController.cs` — creature-style WASD movement, sprint, jump, smoother acceleration, slope lean and simple leg motion.
-- `Assets/Scripts/ThirdPersonCamera.cs` — smooth follow camera that looks at the dino head.
-- `Assets/Editor/TedDinoIslandBuilder.cs` — Unity editor menu that builds the starter island scene.
+- Source: https://quaternius.itch.io/animated-lowpoly-dinosaurs
+- License: CC0 1.0 Universal / public domain
+- Included here under `Assets/External/Quaternius/`
+
+## Current playable dino
+
+The scene builder now tries to use the imported Quaternius animated T-Rex FBX instead of the old primitive placeholder. It creates a simple animator controller from the FBX clips and drives it from player movement speed.
+
+If Unity has not finished importing the FBX files yet, the builder may briefly fall back to the old primitive dino. Wait for Unity to finish compiling/importing, then run the Ted menu again.
 
 ## In Unity
 
 1. Pull/sync the latest repo changes.
 2. Open the project in Unity.
-3. In the top menu, click `Ted > Create Dino Island Starter Scene`.
-4. Press Play.
-5. Controls: W/Up = forward where the dino nose points, S/Down = reverse, A/D = steer, Shift+W = sprint, Space = jump.
+3. Wait for Unity to finish importing/compiling.
+4. In the top menu, click `Ted > Create Dino Island Starter Scene`.
+5. Press Play.
+6. Controls: W/Up = forward where the dino nose points, S/Down = reverse, A/D = steer, Shift+W = sprint, Space = jump.
 
-The builder now creates a much larger procedural terrain island with hills, a river, plants, rocks, collectibles and surrounding ocean. If you already created the old scene, run `Ted > Create Dino Island Starter Scene` again to rebuild it.
+The builder creates a large procedural terrain island with hills, a river, plants, rocks, collectibles and surrounding ocean.
 
-This is still a placeholder dinosaur. For true photorealistic visuals and proper walking/running over hills, the next real step is importing a rigged dinosaur model with animations and blending those animations in Unity.
+## Debugging what Zac sees
+
+The game shows a top-left Ted debug HUD in Play mode. If Ted and Zac are seeing different things, send Ted a screenshot/video showing that HUD plus the Unity Console.
